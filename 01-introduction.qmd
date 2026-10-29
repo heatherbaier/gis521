@@ -1,0 +1,163 @@
+---
+title: "Introduction"
+format: html
+---
+
+## Introduction to the Class {#sec-class}
+
+### What this course is
+
+This course teaches you to work with geospatial data the way a data scientist works with data. You will start with a question that someone cares about, find and clean the data needed to answer it, explore and model that data, and communicate the result in a form a decision maker can use. You will do all of it in Python, with code that someone else can replicate, run and continue working on.
+
+Most of you have used the point-and-click ESRI ArcGIS software. That approach works well for one analysis on one dataset. It works poorly when the data is large, when the same analysis has to be repeated for fifty counties, or when someone asks six months later exactly how a map was made. Code solves those problems, and it is the main tool we'll be using in this course.
+
+### Who this course is for
+
+The course is for graduate students and practitioners from geography, planning, environmental science, and related fields. The first module reviews Python from the basics, and every lab has a guided portion and an independent portion. Struggling with an error message is a normal part of learning to code, and learning how to get unstuck is one of the skills the course teaches.
+
+### How the course works
+
+The course is organized into seven modules and a final project. Each module follows the same pattern.
+
+1. **Lecture.** About 40 minutes of concepts, with live demonstrations in a notebook.
+2. **Guided lab.** You work through a notebook with Prof. Baier, filling in parts of the code as you go.
+3. **Independent lab.** You extend the analysis on your own, with a starter version and a stretch version of the task.
+4. **Deliverable.** A short product written for a specific audience, such as a planning department or a utility. It is not a code dump.
+
+The deliverables matter as much as the code. A correct analysis that nobody can understand has not answered anyone's question.
+
+::: {.callout-note title="About computing"}
+Labs run in Jupyter notebooks. Module 4 covers high-performance computing in depth, including how to run your work on ASU's Sol supercomputer. Setup instructions for everything else are in Module 1.
+:::
+
+<!-- TODO add a short note here pointing to the syllabus AI policy -->
+
+## What is GIS? {#sec-gis}
+
+A geographic information system (GIS) is a system for capturing, storing, managing, analyzing, and visualizing data that is tied to locations on the Earth's surface. The word system matters. A GIS is more than software. It combines data, software, hardware, methods, and the people who use them to answer questions about places.
+
+### Core ideas you will use throughout the course
+
+- **Layers.** A map is built from stacked layers, such as roads, parcels, and elevation, that can be combined.
+- **Vector and raster data.** Vector data represents the world as points, lines, and polygons. Raster data represents it as a grid of cells with a value in each one.
+- **Geometry and attributes.** Every feature records where it is and what it is.
+- **Coordinate reference systems.** A coordinate reference system defines how positions on a curved Earth become coordinates on a flat map. Two layers only line up when they use compatible systems.
+- **Spatial operations.** Buffers, overlays, joins, and distance calculations let you ask questions that depend on where things are relative to each other.
+
+### GIS and geographic information science
+
+Goodchild (1992) argued that the questions raised by working with GIS, such as how to represent the world in a computer and how to deal with error, form a field of study in their own right, which he called geographic information science. The distinction is useful. GIS is the tool, and GIScience is the body of ideas about how the tool should be used and trusted.
+
+### What GIS does well, and where it strains
+
+Traditional desktop GIS is excellent at inventory, query, overlay, and cartography. A typical analysis loads layers, runs a sequence of tools, and produces a map. The strain shows up when the analysis has to be repeated, shared, scaled, or audited. Manual steps in a graphical interface are hard to record exactly, and large datasets can exceed what a desktop application handles comfortably.
+
+::: {.callout-tip title="Practitioner scenario"}
+A city planning office wants to know which neighborhoods have no grocery store within a ten-minute walk. In desktop GIS you could buffer the store locations, overlay the buffers with census tracts, and make a map. That answers the question once. Next year the question changes to a different city, a different travel time, and a newer store list. Rebuilding the analysis by hand each time is where code starts to pay off.
+:::
+
+## What is Data Science? {#sec-ds}
+
+Data science is the practice of learning from data. That sounds broad on purpose. Donoho (2017) describes the field as including data exploration and preparation, data representation and transformation, computing with data, data modeling, visualization and presentation, and the study of data science practice itself. Notice how much of that list comes before modeling.
+
+A common way to picture the field is as the overlap of three kinds of knowledge, which are programming skill, knowledge of mathematics and statistics, and domain expertise in the subject being studied (Conway, 2010). The third part is easy to forget. A model built without understanding the place, the people, or the process behind the data can be technically correct and still useless.
+
+### The data science workflow
+
+Data science projects follow a rough sequence, though real projects loop back constantly.
+
+1. **Ask a question.** Decide what you are trying to learn and who will use the answer.
+2. **Acquire data.** Find data and bring it into your working environment.
+3. **Clean and prepare.** Fix errors, handle missing values, and reshape the data for analysis.
+4. **Explore.** Summarize and visualize the data to understand it and to catch problems early.
+5. **Model.** Use statistical or machine learning methods to describe patterns or make predictions.
+6. **Evaluate.** Test how well the model works, and for whom, and where it fails.
+7. **Communicate and share.** Present the result for its audience, and package the work so others can rerun it.
+
+### How data science relates to statistics
+
+Statistics is mainly concerned with inference, meaning what you can conclude about a process from a sample under stated assumptions. Data science uses statistics heavily, but it puts more weight on the whole pipeline, on computing at scale, on prediction for new data, and on reproducibility. The two fields overlap and neither replaces the other.
+
+### Two common misunderstandings
+
+First, data science is not the same as machine learning. Machine learning is one tool in the modeling step. Practitioners commonly report that preparing data takes more of their time than modeling it, and this course spends its time accordingly. Second, reproducibility is not optional. If another person cannot rerun your analysis and get the same result, they cannot check it, build on it, or trust it.
+
+::: {.callout-tip title="Practitioner scenario"}
+A retailer gives you three years of sales records. Store names are spelled differently from year to year, some dates are missing, and one region reports in a different currency. Before any model is fit, you spend days resolving those problems. The quality of everything that follows depends on how carefully you do that work and how well you document it.
+:::
+
+## What is Geospatial Data Science? {#sec-gds}
+
+Geospatial data science applies the data science workflow to data in which location is a defining feature (Rey et al., 2023). It borrows its vocabulary from GIS and its workflow from data science. The two fields overlap, but geospatial data science is not the same as GIS. GIS is a tool for working with spatial data, and geospatial data science is a workflow for learning from it.
+
+### What location changes at each stage of the data science workflow
+
+| Workflow stage | What location adds |
+|---|---|
+| Ask a question | Questions are about where, and the answer depends on the scale and the units of analysis you choose |
+| Acquire data | Sources include APIs, satellite catalogs, OpenStreetMap, and administrative boundaries, and they differ in coordinate system, resolution, and date |
+| Clean and prepare | Location itself contains error, from failed geocoding to displaced coordinates and boundaries that change over time |
+| Explore | Maps become an exploration tool, and the pattern you see can change with how areas are drawn |
+| Build features | Distances, neighborhood summaries, and raster values become table columns, and the choice of scale is a design decision |
+| Model | Nearby observations are not independent, so standard assumptions about the data often fail |
+| Evaluate | Random train and test splits can overstate performance, so models need spatial validation and a look at where the errors fall |
+| Communicate and share | Maps persuade, so cartographic choices shape conclusions, and location data can identify people |
+
+The data engineering side deserves attention too. Geospatial datasets are often large, stored in specialized formats, and slow to process on a laptop. Handling them efficiently, and knowing when to move work to a high performance computer, is part of the job.
+
+<!-- Here is a small example of what a whole step looks like as code. Do not worry about the details yet. The point is that every line is a recorded decision that someone else can read and rerun. -->
+
+<!-- ```{python}
+#| eval: false
+import geopandas as gpd
+
+tracts = gpd.read_file("phoenix_tracts.geojson")    # acquire the data
+tracts = tracts.to_crs(epsg=32612)                  # put it in one shared coordinate system
+tracts["area_km2"] = tracts.area / 1e6              # derive a new column
+tracts.plot(column="area_km2", legend=True)         # look at the result
+``` -->
+
+### Where this course sits
+
+Geospatial data science sits alongside two related areas that you may study elsewhere in the program.
+
+- **Spatial statistics** focuses on inference and on describing spatial dependence, including measures of autocorrelation and spatial regression. This course relies on its conclusions but does not reteach its methods.
+- **GeoAI** focuses on building and training models, including how learning algorithms work. This course uses models as tools within a larger workflow and leaves the algorithm internals to GeoAI.
+
+This course covers the data lifecycle around both. It is about getting from raw, messy, location-based data to an answer that is reproducible, tested properly, and communicated well.
+
+### How the modules map to the workflow
+
+| Module | Focus | Main workflow stages |
+|---|---|---|
+| 1. Introduction and the Data Science Workflow | Environment, Python, pandas, Git | All stages, at overview level |
+| 2. Vector Data and Spatial Data Wrangling | Joins, APIs, geocoding, data quality | Acquire, clean and prepare, explore |
+| 3. Raster Data and Turning Space into Features | xarray, zonal statistics, scale | Build features |
+| 4. Scalable Workflows and High-Performance Computing | Batch jobs, pipelines, replication | Acquire, communicate and share |
+| 5. Spatial Features, Scale, and the Geography of Evaluation | Spatial splits, leakage, residual maps | Model, evaluate |
+| 6. Spatial Prediction and Unsupervised Learning | Interpolation, clustering, uncertainty | Model, evaluate |
+| 7. Supervised Learning, Applied | Pipelines, baselines, interpretation | Model, evaluate, communicate |
+
+<!-- ::: {.callout-note title="For discussion"}
+Think of a map you have seen that gave you the wrong impression. Was the problem the data, the scale, the way areas were drawn, or the design of the map? Bring your example to class.
+::: -->
+
+<!-- ## Check your understanding {#sec-check}
+
+1. Name the two main spatial data models and give one example of data that suits each.
+2. Why can two layers fail to line up even when both contain correct data?
+3. In your own words, how is data science different from statistics, and where do they overlap?
+4. Pick two workflow stages and describe one thing that location makes harder at each.
+5. A colleague says a model scored well on a random test split, so it is ready to use in a new city. What would you ask them? -->
+
+## References {#sec-references}
+
+Conway, D. (2010). The data science Venn diagram. Personal blog.
+
+Donoho, D. (2017). 50 years of data science. *Journal of Computational and Graphical Statistics, 26*(4), 745–766.
+
+Goodchild, M. F. (1992). Geographical information science. *International Journal of Geographical Information Systems, 6*(1), 31–45.
+
+Rey, S., Arribas-Bel, D., & Wolf, L. (2023). *Geographic Data Science with Python*. CRC Press.
+
+Tobler, W. R. (1970). A computer movie simulating urban growth in the Detroit region. *Economic Geography, 46*, 234–240.

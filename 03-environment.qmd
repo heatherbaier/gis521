@@ -1,0 +1,570 @@
+---
+title: "Environments, Git, and GitHub"
+---
+
+By the end of the chapter you will be able to do the following.
+
+- Open a terminal and move around it with a small set of commands.
+- Explain what a software environment is and create one from a file.
+- Use that environment in a Jupyter notebook on ASU's Sol supercomputer.
+- Record the history of a project with Git and recover from common mistakes.
+- Publish a project to GitHub and keep it in sync.
+
+
+<!-- ::: {.callout-tip title="Practitioner scenario"}
+You finish an analysis of cooling center access and email the notebook to a colleague at the county health department. It runs perfectly on your machine. On hers it stops with an error about a function that does not exist. Her copy of one library is a newer version than yours, and the newer version changed how that function works. The two of you lose an afternoon working out why. Later you also cannot remember which of three files named `analysis_final_v2.ipynb` produced the numbers in your report. Environments solve the first problem and version control solves the second.
+::: -->
+
+## A short tour of the terminal {#sec-terminal}
+
+Nearly everything in this chapter happens in a terminal, so we start there. A terminal is a window where you control the computer by typing commands instead of clicking. The program inside it that reads your commands is called a shell. When the shell is ready for input it shows a prompt, usually ending in a `$` symbol.
+
+This differs from our nromal point-and-lick navigation in that typed commands can be saved, repeated, shared, and run on remote computers (like ASU's Sol Supercomputer!), which is why they are the standard way to work on a supercomputer like Sol.
+
+The commands in this chapter work in the Linux style terminal that Sol provides, and also on macOS.
+
+<!-- If you use Windows, do the work through the Sol shell in your web browser and you can skip any extra installation. -->
+
+### Where am I, and how do I move around
+
+The terminal is always "in" one folder, called the *current working directory*. Most commands act on that folder unless you say otherwise. A path is the written address of a file or folder. A path that starts from the top of the file system, such as `/home/yourname/project`, is an absolute path. A path that starts from where you are now, such as `data/raw`, is a relative path. Three shortcuts appear everywhere.
+
+- `~` means your home folder.
+- `.` means the current folder.
+- `..` means the folder one level above the current one.
+
+### Commands you will use constantly
+
+| Command | What it does |
+|---|---|
+| `pwd` | Prints the folder you are currently in |
+| `ls` | Lists the files and folders here |
+| `ls -a` | Lists everything, including hidden files whose names start with a dot |
+| `cd folder_name` | Moves into a folder |
+| `cd ..` | Moves up one folder |
+| `cd ~` | Moves to your home folder |
+| `mkdir folder_name` | Creates a new folder |
+| `cp file new_file` | Copies a file |
+| `mv file new_name` | Renames or moves a file |
+| `rm file` | Deletes a file permanently |
+| `cat file` | Prints the contents of a file to the screen |
+| `nano file` | Opens a simple text editor in the terminal |
+| `clear` | Clears the screen |
+
+Adding `--help` after almost any command prints a summary of how to use it, for example `ls --help`.
+
+::: {.callout-warning title="Deletion is permanent"}
+The terminal has no recycle bin. A file removed with `rm` is gone. Be especially careful with `rm -r`, which deletes a whole folder and everything inside it. Read the command twice before you press Enter.
+:::
+
+Two habits will save you a great deal of typing. Press the Tab key to complete a file or folder name once you have typed the first few letters. Press the up arrow to bring back previous commands.
+
+### Try it
+
+Open a terminal and type the following, pressing Enter after each line. Look at the output of each command before moving on.
+
+```bash
+pwd
+mkdir terminal-practice
+cd terminal-practice
+pwd
+nano notes.txt
+ls
+cat notes.txt
+cd ..
+```
+
+In `nano`, type a line of text, then press Ctrl and O together and Enter to save, and Ctrl and X together to exit. Afterward `ls` should show `notes.txt` and `cat` should print what you typed.
+
+## Software environments {#sec-environments}
+
+### Packages and dependencies
+
+Python by itself can do very little with maps. The useful abilities come from packages, which are collections of code written by other people that you install and then use. This course relies on packages such as pandas for tables, GeoPandas for vector data, rasterio and xarray for rasters, and scikit-learn for machine learning.
+
+Packages are built on top of other packages. GeoPandas needs pandas and Shapely. Those in turn need further packages, and several of them depend on compiled libraries written in C and C++, such as GDAL, GEOS, and PROJ, which handle file formats, geometry, and coordinate systems. The other packages a package needs are called its dependencies.
+
+Packages also change over time. Each release has a version number, and a newer version may fix bugs, add features, or change how something works. Code written against one version can behave differently or fail under another.
+
+### The problem
+
+Imagine you install the newest version of a library for one project. A month later a second project needs an older version of the same library. A computer holds only one installed copy, so one of the projects breaks. With geospatial software the problem is worse, because the compiled libraries underneath must also be compatible with each other. It is easy to end up with a tangle that is difficult to repair.
+
+### The solution
+
+A software environment is an isolated, self-contained set of software that holds its own copy of Python and its own packages. You create one for each project. Activating an environment tells the terminal to use that environment's software, and deactivating it returns you to normal. Because environments are separate, changing one never affects another.
+
+A helpful picture is a set of labeled toolboxes. The toolbox for one project holds exactly the tools that project needs, at the versions it needs, and sits apart from every other toolbox.
+
+### Conda, mamba, and channels
+
+A package manager is a program that downloads, installs, and updates packages and their dependencies for you. We use conda, along with a faster program called mamba that accepts almost the same commands. Conda is a good fit for geospatial work because it installs the compiled libraries as well as Python code, and it makes sure all the pieces are compatible.
+
+Conda gets packages from channels, which are online collections of packages. Our channel is conda-forge, a large community maintained collection that contains the whole geospatial stack. You will see `-c conda-forge` in commands that name it, and our environment file names it too.
+
+Python also has its own installer called pip. You will sometimes see instructions that use it. For this course, install with conda or mamba first, and use pip only for a package that is not available on conda-forge, and only while your environment is activated. ASU Research Computing gives the same advice for its supercomputers.
+
+::: {.callout-warning title="Leave the base environment alone"}
+Conda creates a default environment called base. Do not install project packages into it. Always create and activate a project environment first.
+:::
+
+### Vocabulary
+
+| Term | Meaning |
+|---|---|
+| Package | Code written by others that you install and import |
+| Dependency | A package that another package needs in order to work |
+| Version | A number identifying a particular release of a package |
+| Environment | An isolated set of Python and packages for one project |
+| Channel | An online collection of packages that conda downloads from |
+| Environment file | A text file that lists the packages an environment should contain |
+| Kernel | The connection that lets a Jupyter notebook run code in a particular environment |
+
+### The course environment file
+
+An environment file is a short text file, usually named `environment.yml`, that describes an environment. With it, anyone can rebuild the same environment with one command. This is the file we use for the course.
+
+```yaml
+name: gds521
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - jupyterlab
+  - ipykernel
+  - numpy
+  - pandas
+  - geopandas
+  - shapely
+  - rasterio
+  - xarray
+  - matplotlib
+  - scikit-learn
+  - requests
+```
+
+<!-- TODO instructor to confirm final package list and Python version -->
+
+Read it from the top. The `name` line is what the environment will be called. The `channels` list says where to download from. The `dependencies` list names the packages, and `python=3.12` pins Python to version 3.12. The indentation matters, so keep it exactly as shown.
+
+### Setting up on Sol
+
+Sol is ASU's supercomputer. We use it for the course labs, and Module 4 explains how it works in detail. For now you only need to build an environment on it. These steps follow the instructions published by ASU Research Computing.
+
+1. **Connect to the ASU VPN** if you are working from off campus or as Research Computing directs.
+2. **Open a terminal on Sol.** Go to sol.asu.edu in your browser, sign in, and choose Sol Shell Access from the System menu. You can also connect with the command `ssh yourasurite@sol.asu.edu` from a terminal on your own computer.
+3. **Request a short interactive session.** Installing packages takes real computing, so Research Computing's tutorials ask for a small session first. Type this command.
+
+   ```bash
+   interactive -p htc -c 4 -t 30
+   ```
+
+   It asks for 4 processor cores for 30 minutes. Wait until the prompt returns.
+
+4. **Load mamba.** Sol makes software available through modules, and you load them as you need them. Type this command.
+
+   ```bash
+   module load mamba/latest
+   ```
+
+   You must repeat this command in every new terminal session.
+
+5. **Create the environment file.** Make a folder for the setup, then open an editor and paste in the contents of the file shown above.
+
+   ```bash
+   mkdir gds521-setup
+   cd gds521-setup
+   nano environment.yml
+   ```
+
+   Save with Ctrl and O, then Enter, and exit with Ctrl and X. Check your work with `cat environment.yml`.
+
+6. **Build the environment.** Type this command, answer Y if it asks for confirmation, and wait. Solving and downloading can take several minutes, which is normal.
+
+   ```bash
+   mamba env create -f environment.yml
+   ```
+
+7. **Activate it.** The name of the environment appears in parentheses at the start of your prompt.
+
+   ```bash
+   source activate gds521
+   ```
+
+8. **Test it.** Python should start, and the import should print a version number without an error.
+
+   ```bash
+   python --version
+   python -c "import geopandas; print(geopandas.__version__)"
+   ```
+
+9. **Create a Jupyter kernel.** Notebooks need a kernel to use your environment. This Sol specific command builds one, and you do not need to activate anything first.
+
+   ```bash
+   mkjupy gds521 "gds521_kernel"
+   ```
+
+10. **Start Jupyter and pick the kernel.** Log in to the Sol web portal, choose Interactive Apps, then Jupyter, fill out the request form, and connect. In the JupyterLab launcher, click the icon named `gds521_kernel` to start a new notebook that uses your environment.
+
+11. **Check that it works.** In the first cell of the notebook, run the version check below. It should run without errors.
+
+    ```python
+    import sys
+    import geopandas
+    import rasterio
+    import xarray
+    import sklearn
+
+    print("Python", sys.version.split()[0])
+    print("geopandas", geopandas.__version__)
+    print("rasterio", rasterio.__version__)
+    print("xarray", xarray.__version__)
+    print("scikit-learn", sklearn.__version__)
+    ```
+
+::: {.callout-note title="Adding packages later"}
+A Jupyter kernel cannot be modified after it is created. If you need another package, add it to the environment from the terminal, then run `mkjupy` again to recreate the kernel, using a new name if you want to keep the old one. Finally, launch a new Jupyter session on the web portal and look for the new kernel.
+:::
+
+### Working on your own computer (optional)
+
+Sol is the supported place to do the course work, so you can skip this section. If you want the same environment on a Mac, Linux, or Windows computer, install Miniforge, which is a minimal installer for conda that uses conda-forge by default. Download the installer for your system from the Miniforge page on GitHub (github.com/conda-forge/miniforge), run it, and open a new terminal. On Windows, use the Miniforge Prompt it installs. Then run these commands in the folder that holds your environment file.
+
+```bash
+conda env create -f environment.yml
+conda activate gds521
+jupyter lab
+```
+
+### Everyday environment commands
+
+| Task | Command |
+|---|---|
+| See your environments | `mamba env list` |
+| Activate an environment on Sol | `source activate gds521` |
+| Activate an environment on your own computer | `conda activate gds521` |
+| Leave the environment | `conda deactivate`, or `source deactivate` if that command is not recognized |
+| List the packages in the active environment | `mamba list` |
+| Add a package | `mamba install package_name` |
+| Update an environment after editing its file | `mamba env update -f environment.yml --prune` |
+| Delete an environment | `mamba env remove -n gds521` |
+
+The `--prune` option removes packages that you deleted from the file, so the environment matches the file exactly.
+
+## Reproducible environments {#sec-reproducible}
+
+An analysis is reproducible when someone else, or you in a year, can run it again and get the same result. Reproducibility depends on many things, and the software environment is one of the easiest to get right.
+
+### The environment file is the recipe
+
+The `environment.yml` file is a recipe for rebuilding your software. This only works if you keep it current and store it with your project. The best habit is to treat the file as the source of truth. When you need a new package, add it to the file and update the environment from the file, instead of installing it by hand and forgetting. If you install something by hand, add it to the file right away.
+
+### Pin what matters
+
+A line like `geopandas` accepts whatever version is current when someone builds the environment. A line like `pandas=2.2` pins a version. Pinning makes results more repeatable, but it can also make an environment harder to build as software ages. In this course we pin the Python version and record the versions of our key packages in our notebooks, as in the check cell above. Research projects that must be exactly repeatable often go further and record every version, and tools called lock files exist for that purpose.
+
+### Test the recipe
+
+The only way to know your recipe works is to use it. Delete the environment, or build a second one under a different name in a new folder, and confirm that your notebook still runs. Doing this once before you share a project catches missing packages while it is still easy to fix.
+
+### The rest of the checklist
+
+The environment is only part of the story. A project is also hard to reproduce when any of these are true.
+
+- The code contains file paths that only exist on your computer. Use relative paths from the project folder.
+- The raw data has been edited by hand with no record.
+- Nobody wrote down where the data came from or when it was downloaded.
+- The README does not say how to set up and run the project.
+
+The folder layout and habits from the previous chapter address most of these. The next part of this chapter adds the missing piece, which is a record of how your files changed.
+
+## Version control with Git {#sec-git}
+
+### The problem
+
+Without version control, people save copies. Folders fill with `report_v2`, `report_final`, and `report_final_REAL`. Nothing records what changed between copies or why, you cannot easily go back to the version from last Tuesday, and two people editing at once overwrite each other.
+
+### What Git is
+
+Git is a program that records the history of a project folder. You tell it when to take a snapshot, called a commit, and it stores exactly what every file looked like at that moment, along with a short message you write and the date. You can look through the history, compare any two points, and restore an earlier version of a file. A folder tracked by Git is called a repository, or repo.
+
+Git works on your own computer. It does not need the internet.
+
+::: {.callout-important title="Git and GitHub are different things"}
+Git is the tool that records history on your computer. GitHub is a website that stores copies of Git repositories online so you can back them up, share them, and work with other people. You can use Git without GitHub. GitHub is useless without Git.
+:::
+
+### Three places your files live
+
+Git thinks about your work in three stages, and understanding them removes most of the confusion.
+
+1. **The working folder** is the files as they are on disk right now, including your unsaved edits.
+2. **The staging area** is a holding area where you collect the specific changes you want to include in your next snapshot.
+3. **The repository** is the saved history of snapshots.
+
+You move changes forward with two commands. `git add` moves changes from the working folder into the staging area, and `git commit` turns everything staged into a snapshot. The staging area exists so that you can choose which changes belong together. If you fixed a bug and also started a new feature, you can commit them separately.
+
+```{mermaid}
+flowchart LR
+  A[Working folder] -- git add --> B[Staging area]
+  B -- git commit --> C[Local repository]
+  C -- git push --> D[GitHub]
+  D -- git pull --> C
+```
+
+The last two arrows connect your computer to GitHub, and we return to them later in the chapter. This picture is simplified, but it is accurate enough to work from.
+
+### One time setup
+
+Check that Git is installed by typing `git --version`. Then tell Git who you are, because every commit records its author. Use your own name and the email address you will use for GitHub.
+
+```bash
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+git config --global init.defaultBranch main
+```
+
+The last line sets the name of the main line of history to `main`. You only do this once per computer. To check your settings, type `git config --global --list`.
+
+### Your first repository
+
+Make a project folder and turn it into a repository. This example uses the folder name from the previous chapter.
+
+```bash
+mkdir phoenix-cooling
+cd phoenix-cooling
+git init
+```
+
+`git init` creates a hidden folder named `.git` that holds the history. You can see it with `ls -a`. Never edit or delete it by hand.
+
+Now create a README file with `nano README.md`, write a title and a sentence about the project, and save it. Then ask Git what it sees.
+
+```bash
+git status
+```
+
+`git status` is the command you will type most often. It will report that `README.md` is untracked, which means Git sees the file but is not recording it yet. Stage the file and commit it.
+
+```bash
+git add README.md
+git commit -m "Add project README"
+```
+
+The text after `-m` is your commit message. Look at the history.
+
+```bash
+git log --oneline
+```
+
+You will see one line with a short code that identifies the commit, followed by your message. Now edit the README, adding another sentence. Ask Git what changed, review it, and commit again.
+
+```bash
+git status
+git diff
+git add README.md
+git commit -m "Describe the study area in the README"
+```
+
+`git diff` shows exactly which lines were added or removed since the last commit. Reading it before you commit is a good habit, because it catches changes you did not mean to make.
+
+### Writing useful commit messages
+
+A commit message is a note to your future self and your collaborators. A good message says what changed, and often why, in a short sentence.
+
+| Weak message | Stronger message |
+|---|---|
+| `stuff` | `Add Census API download script` |
+| `fix` | `Fix tract IDs that lost leading zeros` |
+| `update` | `Switch to a projected coordinate system for distance calculations` |
+| `final version` | `Add figure of heat exposure by tract` |
+
+Commit small and often. A good time to commit is whenever you have reached a point where something works and you could describe it in one line.
+
+### What not to commit
+
+Git is designed for text files such as code, notes, and small data tables. Some things should stay out of your repository.
+
+- **Large data files.** Satellite imagery and big datasets slow Git down and may exceed GitHub's file size limits. Keep them outside the repository and document in the README where to get them.
+- **Secrets.** Passwords and API keys, such as your Census API key, must never be committed.
+- **Clutter.** Temporary and automatically generated files add noise to your history.
+
+You tell Git to ignore files by listing them in a file named `.gitignore` in the top folder of the project. A starting version for this course looks like this.
+
+```
+# large data lives outside Git
+data/raw/
+data/processed/
+
+# notebook and Python clutter
+.ipynb_checkpoints/
+__pycache__/
+
+# secrets
+.env
+```
+
+Lines that begin with `#` are comments. Keep your API keys in a file named `.env` that this list ignores, and load them from there in your code.
+
+::: {.callout-warning title="A committed secret stays in the history"}
+If you commit a password or key and delete it in the next commit, it is still in the project history, and anyone with access to the repository can find it. Treat a key that has been committed as compromised. Tell your instructor, and get the key revoked or replaced.
+:::
+
+### Notebooks and Git
+
+A Jupyter notebook is stored as one long structured text file that includes its outputs. Git can track it, but differences between versions are hard to read, and notebooks with large maps or images grow quickly. Commit notebooks often, and consider clearing large outputs before you commit if the file becomes very large.
+
+### Undoing mistakes
+
+| Situation | What to do |
+|---|---|
+| You want to see what has changed since the last commit | `git diff` |
+| You staged a file by mistake and want to unstage it | `git restore --staged file_name` |
+| You edited a file and want to throw those edits away | `git restore file_name` |
+| You want to review past commits | `git log --oneline` |
+
+Be careful with the third row. Discarding uncommitted edits cannot be undone, because Git never recorded them. This is one more reason to commit often.
+
+## GitHub {#sec-github}
+
+GitHub hosts Git repositories online. It gives you a backup if your computer or account has trouble, a way to share work, a record of your progress that your instructor can see, and the main tool of collaboration across research and industry. You will also use it to submit assignments.
+
+<!-- TODO instructor to state how repositories are submitted, for example classroom links or adding the instructor as a collaborator -->
+
+### Create an account
+
+Go to github.com and create a free account. Choose a username you would be comfortable putting on a resume, since many people keep the same one for their whole career. Verify your email address when GitHub asks.
+
+### Connect your computer to GitHub
+
+When your computer talks to GitHub it must prove who you are. GitHub does not accept your account password for this. We use an SSH key, which is a pair of linked files. One is a private key that stays on the computer, and the other is a public key that you give to GitHub. You can think of the public key as a padlock that you hand out and the private key as the only key that opens it. GitHub keeps the padlock, and your computer holds the key. Anyone can see the padlock, but only your computer can unlock it.
+
+Do these steps in your Sol terminal.
+
+1. **Create a key pair.** Press Enter to accept the default file location. A passphrase is optional, and you can press Enter to skip it.
+
+   ```bash
+   ssh-keygen -t ed25519 -C "you@example.com"
+   ```
+
+2. **Print the public key.** Copy the whole line of output, which starts with `ssh-ed25519`.
+
+   ```bash
+   cat ~/.ssh/id_ed25519.pub
+   ```
+
+   Share only this file, whose name ends in `.pub`. Never share the one without it.
+
+3. **Give it to GitHub.** On the GitHub website, click your profile picture, then Settings, then SSH and GPG keys, then New SSH key. Give it a title such as "Sol", paste the key, and save it.
+
+4. **Test the connection.** The first time, it asks whether to trust GitHub, and you type yes.
+
+   ```bash
+   ssh -T git@github.com
+   ```
+
+   A message that begins with "Hi" followed by your username means it worked.
+
+### Publish your repository
+
+On GitHub, click the plus sign near the top of the page and choose New repository. Name it `phoenix-cooling`, make it private, and do not add a README or any other files, because your local repository already has its own history. Then connect your local repository to it. Replace `yourusername` with your GitHub username.
+
+```bash
+cd ~/phoenix-cooling
+git remote add origin git@github.com:yourusername/phoenix-cooling.git
+git branch -M main
+git push -u origin main
+```
+
+Here is what each line does. A remote is a copy of your repository somewhere else, and by convention the main one is named `origin`. The second line makes sure your main branch is named `main`. The last line sends your history to GitHub, and `-u` remembers the connection so that later you can type just `git push`. Refresh the repository page on GitHub and you will see your files, with the README displayed below them.
+
+### The daily rhythm
+
+Once the connection exists, a working session follows a steady pattern.
+
+1. Start by pulling in any changes from GitHub with `git pull`.
+2. Do your work, checking `git status` as you go.
+3. Stage and commit when something works, with `git add` and `git commit -m "message"`.
+4. Finish by sending your commits to GitHub with `git push`.
+
+### Getting a copy of a repository
+
+To download a repository that already exists on GitHub, including its full history, use `git clone`.
+
+```bash
+git clone git@github.com:yourusername/phoenix-cooling.git
+```
+
+This creates a new folder with the repository inside it, already connected to GitHub. It is how you will get the course materials.
+
+### When a push is rejected
+
+If `git push` fails with a message that the remote contains work you do not have, GitHub holds commits that your computer does not, perhaps because you edited a file on the website or worked from another computer. Run `git pull` to bring those changes in, then push again. If Git reports a merge conflict, it means two versions changed the same lines and it needs you to choose. This is uncommon when you work alone, and it is a good moment to ask for help the first time it happens.
+
+Branches and pull requests, which are the tools for working in parallel with other people, are worth learning, and we leave them for later.
+
+## Starting a project, start to finish {#sec-routine}
+
+Here is the whole routine for a new project, using everything in this chapter and the previous one.
+
+1. Create the project folder with its subfolders for data, code, and outputs.
+2. Run `git init`.
+3. Write a README that says what the project is and how to run it.
+4. Add a `.gitignore` file.
+5. Add an `environment.yml` file listing the packages you need.
+6. Commit these first files with a clear message.
+7. Create an empty repository on GitHub and connect and push your project to it.
+8. Build the environment, create the Jupyter kernel, and open your first notebook.
+9. From then on, commit and push whenever you reach a working point.
+
+## Troubleshooting {#sec-troubleshooting}
+
+| What you see | Likely cause | What to try |
+|---|---|---|
+| `mamba: command not found` | The mamba module is not loaded | Run `module load mamba/latest` in this terminal |
+| `ModuleNotFoundError` in a notebook | The notebook is using the wrong kernel, or the package is not in the environment | Check the kernel name at the top right of the notebook, and confirm the package with `mamba list` after activating the environment |
+| Your kernel does not appear in Jupyter | The kernel was created after the session started, or was never created | Run `mkjupy` and start a new Jupyter session |
+| The environment solve is taking a long time | This is normal for large environments | Wait several minutes before worrying |
+| `fatal: not a git repository` | You are not inside the project folder | Run `pwd` and `cd` to the right folder |
+| `nothing to commit` when you expected changes | You did not save the file, or you are in a different folder | Save the file and run `pwd` |
+| `Permission denied (publickey)` | GitHub does not have your public key | Redo the key steps and test with `ssh -T git@github.com` |
+| `failed to push some refs` | GitHub has commits you do not have | Run `git pull`, then push again |
+| You committed a large file or a secret | It is now in the project history | Tell your instructor, and revoke any key that was exposed |
+
+## Exercise, build a reproducible project {#sec-env-exercise}
+
+**Goal.** Create a small project that someone else could set up and run, and prove it.
+
+<!-- TODO instructor to set due date and submission method -->
+
+**What to do**
+
+1. Create a project folder named `gds521-yourlastname` in your home folder on Sol, with the folder layout from the previous chapter.
+2. Initialize a Git repository.
+3. Write a README that says what the project is, how to build the environment, and how to open the notebook.
+4. Add a `.gitignore` that follows the guidance in this chapter.
+5. Add the course `environment.yml` file.
+6. Build the environment and create a Jupyter kernel for it.
+7. Create a notebook named `00_setup_check.ipynb` that runs the version check from this chapter and prints a short description of the software environment.
+8. Make a private GitHub repository, connect your project to it, and push.
+9. Make at least five commits with meaningful messages along the way, and not all at the end.
+
+**Prove it works.** Without changing your project files, create a second environment from your `environment.yml` using a different name, for example by editing the `name` line in a copy of the file. Confirm that your notebook runs when it uses the new kernel.
+
+**Write a short reflection of one paragraph.** In your own words, explain what an environment is and why the `environment.yml` file belongs in the repository.
+
+**Submit** the link to your GitHub repository.
+
+**Grading guide**
+
+| Part | Weight |
+|---|---|
+| Repository contains the required files and sensible structure | 25% |
+| The environment builds from the file and the check notebook runs | 25% |
+| At least five commits with clear messages, spread across the work | 25% |
+| The second environment test is documented | 10% |
+| Reflection shows an accurate understanding of environments | 15% |
+
+## Sources {#sec-env-sources}
+
+The Sol commands in this chapter follow the published instructions of ASU Research Computing (docs.rc.asu.edu). Commands and menu names change from time to time, so check the current Research Computing documentation if a step does not behave as described.

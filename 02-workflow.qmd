@@ -1,0 +1,159 @@
+---
+title: "The Data Science Workflow"
+---
+
+The introduction listed the steps of a data science project. This chapter shows walks through them in more detail. It covers how to turn a vague request into a question you can answer, how to organize a project so that someone else can rerun it, and what the whole process looks like in a published study. It ends with an exercise in which you analyze a study of your own choosing in the same way.
+
+::: {.callout-tip title="Practitioner scenario"}
+A city sustainability office sends you one line in an email. It reads "Where should we put cooling centers?" Nobody has told you what data exists, who will make the decision, how many sites the budget allows, or what counts as a good location. The first and most valuable part of your job is turning that sentence into something you can actually answer.
+:::
+
+## Framing a question {#sec-framing}
+
+A vague request becomes a workable question once you pin down four things.
+
+- **The decision.** What will someone do differently depending on your answer? If nothing changes, the analysis is not worth running.
+- **The audience.** Who will read the result, and how technical are they? A planning commissioner needs a different product than a research team.
+- **The unit and the scale.** What are you measuring and where? Census tracts, parcels, 30 meter cells, and neighborhoods give different answers, and the choice is yours to make deliberately.
+- **The evidence and the standard.** What would convince the audience, and how accurate does the answer need to be to be useful?
+
+Here is the cooling center request after that work.
+
+> Which census tracts in Phoenix have the highest summer heat exposure and the fewest places within a 15 minute walk where residents can cool down, and how confident are we in that ranking?
+
+The sharpened version names a unit (census tracts), a place and a season, two measurable ingredients (heat exposure and walkable access to cooling), and a requirement to report confidence. Each of those points to data you will have to find, and each makes the work checkable.
+
+## Scoping the work {#sec-scoping}
+
+Before you start, test the question against reality. Ask whether data exists at the scale you need, whether it is recent enough, whether you can legally and practically get it, and whether the work fits the time and computing you have. Decide in advance what "good enough" means, because without a stopping rule an analysis can absorb unlimited time. Scoping often forces a compromise. The data you want may exist only for part of the area, or only for last year. Write down the compromise and the reason for it.
+
+## The workflow is a loop, not a line {#sec-loop}
+
+The seven steps in the introduction look like a straight line, but real projects double back constantly. Here is a typical example. While cleaning an address list you discover that a large share of the addresses fail to geocode, and the failures cluster in newly built subdivisions on the edge of the city. That finding changes what you do next. You might switch data sources, you might restrict the question to areas where the data is trustworthy, or you might keep going and report the gap as a limitation. In every case the cleaning step reached back and reshaped the question.
+
+A good analyst always documents surprises and complications in the data!
+
+## Habits that make a project rerunnable {#sec-habits}
+
+Most of what separates a reproducible project from a pile of files is a handful of habits. They are easy to learn early and painful to add late.
+
+**Organize the folder.** Keep raw data separate from everything you create, and keep code separate from outputs.
+
+```
+phoenix-canopy/
+  README.md
+  decisions.md
+  environment.yml
+  data/
+    raw/            (original files, never edited)
+    processed/      (anything your code creates)
+  notebooks/
+  src/
+  outputs/
+    figures/
+    tables/
+```
+
+**Never edit raw data by hand.** If a file needs fixing, fix it in code that reads the raw file and writes a new one to `processed`. That way anyone can see exactly what you changed and why.
+
+**Write a README.** Say what the project is, how to set up the environment, and the order in which to run things. Write it for a person who has never seen the project, because that person is you in six months.
+
+**Keep a decision log.** In `decisions.md`, record each choice that could have gone another way, such as dropping a column, choosing a coordinate system, or excluding a region. One or two lines per decision is enough. You may think you will remember all of these, but trust me, you will not!
+
+**Document your data.** For every dataset, write down where it came from, when you got it, what each column means, and what the units are. If possible, save any codebook, documentation or metadata that came with the data. If you create a new dataset, write a data dictionary that explains each column and its units.
+
+**Use version control.** Git records the history of your project so you can see what changed and undo mistakes. For now you only need three commands.
+
+<!-- ```bash
+git init
+git add README.md
+git commit -m "Add project README and folder structure"
+```
+
+Commit often, and write messages that say what changed and why. Branches and merging can wait until later in the course. -->
+
+## A published project from question to communication {#sec-walkthrough}
+
+Now we apply the workflow to a real study. Mallen et al. (2022) is a short report from the Centers for Disease Control and Prevention, the Arizona Department of Health Services, the Maricopa County Department of Public Health, and Arizona State University.
+
+### The question
+
+The report does several things. It tracks heat days and heat-related illness hospitalizations in Maricopa and Yuma counties from 2010 to 2020, it surveys older adults in Yuma County about cooling centers, and it overlays cooling center locations on a measure of social vulnerability. We follow the third thread, because it is the geospatial core of the study.
+
+In plain words, the question is whether cooling centers are located in the places where people face the highest risk. The decision behind it is practical. Health departments choose where to open centers, how long to keep them open, and where to direct outreach, and the authors recommend opening centers in locations of high social vulnerability (Mallen et al., 2022).
+
+### The workflow stage by stage
+
+| Workflow stage | What the authors did | What to notice |
+|---|---|---|
+| Ask a question | Asked whether cooling centers sit in areas where residents are at higher risk | The unit is the census tract, and the answer is a share of centers |
+| Acquire data | Took cooling center locations from the Maricopa Association of Governments Heat Relief Regional Network, and used the CDC Social Vulnerability Index | Two sources from two organizations, each with its own update schedule |
+| Clean and prepare | Left out centers opened as part of the COVID-19 response, recalculated the index at the census tract scale in R, and called the tracts in the top 25 percent of scores within each county highly vulnerable | The cutoff is a decision, and it is relative to each county |
+| Analyze | Overlaid the center locations on the tracts and counted the share of centers that fall in highly vulnerable tracts, for 2019 and 2020 | A simple method that is easy to explain to a non-technical audience |
+| Evaluate | Listed four limitations | The overlay is a snapshot from a single source |
+| Communicate and share | Published a short report with a summary box, a figure, a table, and recommendations | Results appear as percentages |
+
+### The result and how to read it
+
+In Maricopa County, 54.3 percent of cooling centers in 2019 and 48.1 percent in 2020 were in areas of high social vulnerability. In Yuma County the figures were 60.0 percent and 83.3 percent (Mallen et al., 2022).
+
+A careful reader asks four questions before accepting those numbers.
+
+1. **What is the right comparison?** If centers were spread evenly across tracts, about one quarter would fall in the top quarter of tracts, so a share near one half stands out. But centers are not spread evenly, and the report does not say what share of the county's residents live in those tracts. The comparison you choose changes what the number means.
+2. **What counts sit behind the percentages?** The report gives percentages without the number of centers. Values such as 60.0 and 83.3 are what you get from very small counts, for example 3 of 5 or 5 of 6, in which case a single center moving changes the result a great deal.
+3. **High relative to what?** Because the cutoff is the top quarter within each county, "high" means high for that county. A highly vulnerable tract in one county is not necessarily comparable to one in another.
+4. **Does location equal access?** A center in a vulnerable tract may still be out of reach. In the Yuma County survey of 39 older adults, 54 percent knew what a cooling center was and 36 percent knew where one was located. Transportation and the inability to bring pets were among the barriers respondents described (Mallen et al., 2022). The sample is small and was not randomly drawn, so treat these figures as a prompt for questions and not as a finding about all older adults.
+
+### What to notice about limits and reproducibility
+
+The authors name four limitations. For the overlay, the important one is that it uses a snapshot in time from a single data source that does not include centers opened for the pandemic response (Mallen et al., 2022).
+
+Now ask whether you could rerun the overlay. The report names its data sources, but it does not say which GIS software or which overlay method the authors used, and it does not link to any code. To reproduce the result you would need the exact cooling center lists for 2019 and 2020, the version of the vulnerability index the authors used, and the tract boundaries behind it. You could probably come close, but you could not be sure of matching them. This is an ordinary situation for a short public health report, and it is exactly what the project habits earlier in this chapter are designed to prevent.
+
+::: {.callout-note title="Try it on paper"}
+Without writing any code, sketch the steps you would follow to reproduce the overlay for Maricopa County. List the input datasets, the operation you would perform, and the table you would end up with. Mark every point where you would have to make a decision that the report does not settle for you. Bring your sketch to class. In Module 2 we carry out a version of this for real.
+:::
+
+## Writing the one page deliverable {#sec-deliverable}
+
+Every analysis in this course ends with a short product written for a specific reader. Use this structure.
+
+1. **The question.** State it in one sentence, using the unit and scale you chose.
+2. **The answer.** Lead with the finding in plain language.
+3. **The evidence.** Include one map or figure and the key number, with its uncertainty.
+4. **The caveats.** State what the data and method cannot tell the reader.
+5. **Do not use this for.** Name at least one use that your result does not support.
+
+The last item is the hardest and the most useful. A result with no stated limits invites misuse.
+
+## Exercise, workflow analysis of a published study {#sec-exercise}
+
+**Goal.** Apply the workflow to a study you choose and judge how well it holds together.
+
+**Choose a paper.** Pick a published, freely available study that uses geospatial data to answer an applied question. It can use any method, but your answers should focus on the workflow and not on the technical details of a statistical or modeling technique. It should describe its data and methods clearly, and ideally it should share its code or data. Short reports from public health, planning, and environmental agencies are good places to look, and so are open access journal articles. Get your choice approved by the instructor before you begin.
+
+**Write 2 to 3 pages that answer the following.**
+
+1. **The question and the decision.** What question does the study answer, who would use the answer, and what unit and scale does it use?
+2. **The data.** What data did the authors use, where did it come from, and how did they bring it together? What quality problems might it have?
+3. **Preparation.** What cleaning, filtering, or defining did they do? Name one decision they made that could have gone another way.
+4. **The method.** What analysis did they carry out, and what did they compare their result against?
+5. **Checking the result.** How did the authors check their result, and what limits did they state? Would a different cutoff, unit, or data source change the conclusion?
+6. **Communication.** How did they present the result, and how did they handle uncertainty?
+7. **Reproducibility.** Could someone rerun the work? List what you would need, such as code, data, software, and computing, and what is missing.
+8. **Your assessment.** If you applied this study to Phoenix, what would you check first, and what is the most likely way it would fail?
+9. **A plain language summary.** Write one paragraph for a non-technical reader, ending with a "do not use this for" statement.
+
+**Grading guide.**
+
+| Part | Weight |
+|---|---|
+| Accurate account of the data, method, and checks (items 1 to 6) | 40% |
+| Reproducibility assessment (item 7) | 15% |
+| Critical assessment and the Phoenix application (item 8) | 25% |
+| Plain language summary (item 9) | 10% |
+| Clarity and organization | 10% |
+
+## References {#sec-references-workflow}
+
+Mallen, E., Roach, M., Fox, L., Gillespie, E., Watkins, L., Hondula, D. M., Vaidyanathan, A., Manangan, A., Perkins, A. N., & Schramm, P. J. (2022). Extreme heat exposure: Access and barriers to cooling centers — Maricopa and Yuma Counties, Arizona, 2010–2020. *MMWR Morbidity and Mortality Weekly Report, 71*(24), 781–785. https://doi.org/10.15585/mmwr.mm7124a1
